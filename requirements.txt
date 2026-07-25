@@ -1,0 +1,4 @@
+# Car AI runtime dependency.
+# The tool layer (python car_ai.py --selftest) needs nothing from this file;
+# only the full assistant (the chat loop) imports ollama.
+ollama>=0.4.0
