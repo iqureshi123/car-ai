@@ -10,8 +10,16 @@ No cloud — the model, the tools, and the logic all run locally on the device.
 
 ## Status — read this first
 
-**Designed for a Raspberry Pi 5 (16GB). This repository runs against simulated
-OBD-II data, not a live vehicle.**
+**Built for a Raspberry Pi 5 (16GB) and tested on a real car, a 2013 Ford
+Fusion AWD, through an ELM327 serial adapter.** On the car, the Pi read live
+sensor values and pulled stored fault codes, and `llama3.2:3b` ran locally on
+the Pi and called the six OBD-II tools.
+
+The live version of the six tools isn't in this repository yet. `car_ai.py`,
+the assistant itself, still reads its tools from a simulated data source
+(`MOCK_OBD`), so you can run it without a car. `live_dashboard.py` reads live
+speed, RPM, coolant temperature, fuel level and engine load from the car
+through python-OBD.
 
 | Component | State |
 |---|---|
@@ -19,19 +27,20 @@ OBD-II data, not a live vehicle.**
 | Tools return value + unit + context (not bare numbers) | ✅ Verified by self-test |
 | Graceful recovery from hallucinated tool names | ✅ Verified by self-test |
 | Simulated OBD-II data source (`MOCK_OBD`) | ✅ Working |
-| Full LLM chat loop — end-to-end tool calling with `llama3.2:3b` | ⚠️ Code complete; not yet run end-to-end |
-| Live OBD-II reads (ELM327 adapter + python-OBD) | ⛔ Not started |
+| `llama3.2:3b` running on the Pi and calling the tools | ✅ Tested on the Pi |
+| Live OBD-II readings and stored fault codes (ELM327 + python-OBD) | ✅ Tested on a 2013 Ford Fusion AWD |
+| Live reads behind the six tools in `car_ai.py` | ⚠️ Tested on the car; not in this repo yet |
+| Latency on the Pi under real driving | ⛔ Not measured |
 | In-car screen + 3D-printed enclosure | ⛔ Not started |
-| Validated on-vehicle / on-Pi performance | ⛔ Not yet verified |
 
-**"Verified by self-test"** means exercised by `python car_ai.py --selftest`,
-which runs the tool layer with no model attached. The full chat loop is written
-but has **not yet been run end-to-end** against a live Ollama server, and
-nothing has been validated on the Pi or in a vehicle yet.
+"Verified by self-test" means exercised by `python car_ai.py --selftest`,
+which runs the tool layer with no model attached. The rows marked as tested on
+the Pi or the Fusion were run by hand on that hardware, and there's no
+automated test for them.
 
-This is a working local-AI **tool layer** with a complete-but-unverified LLM
-loop, running on **simulated** vehicle input. It is not a finished in-car
-product, and this README does not pretend otherwise.
+It has run on a real car, but it isn't a finished in-car product. There's no
+screen or enclosure yet, and the live tool code still has to be added to this
+repository.
 
 ---
 
@@ -52,9 +61,9 @@ Every technical decision below follows from that constraint.
    with the list of tool schemas (the six readers).
 2. Instead of guessing a number, the model emits a **tool call** — e.g.
    `get_coolant_temp()`.
-3. The dispatcher runs that Python function, which reads the (currently
-   simulated) sensor and returns a dict with the **value, its unit, and
-   context**.
+3. The dispatcher runs that Python function, which reads the sensor
+   (from `MOCK_OBD` in this repository's version) and returns a dict with the
+   **value, its unit, and context**.
 4. That result is appended to the conversation and sent back to the model.
 5. The model may call more tools, or — once it has what it needs — answer in
    plain language.
@@ -116,26 +125,40 @@ python car_ai.py
 Then ask things like *"is my engine running hot?"* or *"do I have any fault
 codes?"*
 
+### Live dashboard
+
+Needs an ELM327 adapter connected to the car's OBD-II port and to the machine
+running the script.
+
+```bash
+pip install obd
+python live_dashboard.py
+```
+
+It refreshes speed, RPM, coolant temperature, fuel level and engine load every
+two seconds, and prints a caution line when speed goes over 70 km/h or RPM
+goes over 4000.
+
 ---
 
 ## Why `llama3.2:3b` (Q4_K_M)
 
 The Pi 5 has no usable GPU, so the model search was limited to small quantized
 models that support function calling. `llama3.2:3b` at Q4_K_M is ~2.0 GB and is
-one of the smallest that does. Whether it calls these six tools reliably enough
-in practice is exactly what the end-to-end verification (see Status) still needs
-to confirm. This was a hardware-constraint problem, not an ML problem.
+one of the smallest that does. It runs on the Pi and calls the six tools; how
+often it picks the right one hasn't been measured yet. This was a
+hardware-constraint problem, not an ML problem.
 
 ---
 
 ## Roadmap
 
-- [ ] Run the full chat loop end-to-end against Ollama and confirm the model
-      calls the six tools reliably
-- [ ] Live OBD-II reads via an ELM327 adapter (python-OBD), behind the same six
-      functions
-- [ ] Verify end-to-end operation on the Pi 5 and measure latency under real
-      driving conditions
+- [x] Run `llama3.2:3b` on the Pi and have it call the six tools
+- [x] Read live OBD-II data and stored fault codes through an ELM327 adapter
+      (python-OBD), tested on a 2013 Ford Fusion AWD
+- [ ] Put the live reads behind the six tools in `car_ai.py` in this repository
+- [ ] Measure how often the model picks the right tool
+- [ ] Measure latency on the Pi under real driving conditions
 - [ ] In-car screen
 - [ ] 3D-printed enclosure
 
