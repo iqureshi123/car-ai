@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Car AI — an on-device diagnostic assistant for cars.
+Car AI: an on-device diagnostic assistant for cars.
 
 A local LLM (llama3.2:3b, served by Ollama) answers plain-English questions
 about a vehicle by calling small "tool" functions that read OBD-II telemetry,
@@ -9,7 +9,7 @@ then explaining the result like a mechanic talking to a non-technical driver.
 STATUS
 ------
 Designed for a Raspberry Pi 5 (16GB). This repository runs against a SIMULATED
-OBD-II data source (the MOCK_OBD dict below) — not a live vehicle. Swapping in
+OBD-II data source (the MOCK_OBD dict below), not a live vehicle. Swapping in
 real readings via an ELM327 adapter and python-OBD is a contained change inside
 the six reader functions; nothing above that layer moves.
 
@@ -34,7 +34,7 @@ MODEL = "llama3.2:3b"
 # Every tool reads through this single dict. It is the seam between the AI layer
 # and the car: when the ELM327 adapter is in hand, each reader below swaps its
 # dict lookup for a python-OBD query and NOTHING above this layer changes. That
-# is the whole reason the AI layer was built against a simulator first — the
+# is the whole reason the AI layer was built against a simulator first, so the
 # hardware integration becomes a six-function edit, not a rewrite.
 MOCK_OBD = {
     "speed_kmh": 82,
@@ -45,7 +45,7 @@ MOCK_OBD = {
     "fault_codes": ["P0420"],
 }
 
-# Raw OBD-II hands you bare DTC strings like "P0420" — never the English
+# Raw OBD-II hands you bare DTC strings like "P0420", never the English
 # meaning. We keep interpretation separate from the raw read, mirroring what
 # live python-OBD actually returns.
 DTC_DESCRIPTIONS = {
@@ -57,7 +57,7 @@ DTC_DESCRIPTIONS = {
 
 
 # ---------------------------------------------------------------------------
-# 2. TOOL FUNCTIONS — the model may call any of these on its own
+# 2. TOOL FUNCTIONS: the model may call any of these on its own
 # ---------------------------------------------------------------------------
 # Each returns a dict carrying the value, its UNIT, and a short CONTEXT string.
 # This matters: hand a 3B model the bare integer 91 and it will confidently
@@ -103,7 +103,7 @@ def get_engine_load() -> dict:
     return {
         "value": MOCK_OBD["engine_load_pct"],
         "unit": "%",
-        "context": "Calculated engine load — the share of maximum available "
+        "context": "Calculated engine load: the share of maximum available "
                    "torque currently being used.",
     }
 
@@ -114,7 +114,7 @@ def get_fault_codes() -> dict:
         {
             "code": code,
             "description": DTC_DESCRIPTIONS.get(
-                code, "Unknown code — look up in a DTC reference."
+                code, "Unknown code. Look up in a DTC reference."
             ),
         }
         for code in codes
@@ -123,7 +123,7 @@ def get_fault_codes() -> dict:
         "codes": detailed,
         "count": len(detailed),
         "context": "Stored diagnostic trouble codes (DTCs). An empty list "
-                   "means no codes are stored — i.e. no faults recorded.",
+                   "means no codes are stored, i.e. no faults recorded.",
     }
 
 
@@ -167,7 +167,7 @@ TOOLS_SPEC = [
 
 
 # ---------------------------------------------------------------------------
-# 4. TOOL DISPATCHER — never crashes the loop
+# 4. TOOL DISPATCHER: never crashes the loop
 # ---------------------------------------------------------------------------
 def dispatch_tool(name: str, arguments: dict | None = None) -> dict:
     """Run the tool the model asked for and return a JSON-serialisable dict.
@@ -195,7 +195,7 @@ def dispatch_tool(name: str, arguments: dict | None = None) -> dict:
 SYSTEM_PROMPT = (
     "You are Car AI, an on-device diagnostic assistant running inside a "
     "vehicle. When the user asks about the car's condition, CALL the "
-    "appropriate tool to read the real sensor value — never guess or invent a "
+    "appropriate tool to read the real sensor value. Never guess or invent a "
     "number. After reading, explain what it means in plain language, like a "
     "good mechanic talking to a driver who isn't technical. Be concise and "
     "concrete, and say clearly whether the reading looks normal or not."
@@ -213,7 +213,7 @@ def chat_loop() -> None:
         return
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    print("Car AI ready — ask about your car. Type 'quit' to exit.\n")
+    print("Car AI ready. Ask about your car. Type 'quit' to exit.\n")
 
     while True:
         try:
@@ -265,19 +265,19 @@ def chat_loop() -> None:
 
 
 def self_test() -> None:
-    """Exercise the tool layer without the LLM — no Ollama, no network."""
-    print("Car AI — tool-layer self-test (no LLM required)\n")
+    """Exercise the tool layer without the LLM (no Ollama, no network)."""
+    print("Car AI: tool-layer self-test (no LLM required)\n")
     for name in TOOL_DISPATCH:
         print(f"  {name}() -> {dispatch_tool(name)}")
     # Prove graceful recovery from a hallucinated tool name:
     print("\n  Simulating a hallucinated tool name:")
     print(f"  dispatch_tool('get_tire_pressure') -> {dispatch_tool('get_tire_pressure')}")
-    print("\nSelf-test complete — tool layer OK.")
+    print("\nSelf-test complete. Tool layer OK.")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Car AI — a local LLM diagnostic assistant for cars."
+        description="Car AI: a local LLM diagnostic assistant for cars."
     )
     parser.add_argument(
         "--selftest",
