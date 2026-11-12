@@ -1,14 +1,14 @@
 # Car AI
 
 An on-device diagnostic assistant for cars. Ask your car a question in plain
-English — *"is my engine running hot?"* — and a local LLM reads the relevant
+English (*"is my engine running hot?"*) and a local LLM reads the relevant
 OBD-II sensor and answers like a mechanic explaining it to a normal person.
 
-No cloud — the model, the tools, and the logic all run locally on the device.
+No cloud: the model, the tools, and the logic all run locally on the device.
 
 ---
 
-## Status — read this first
+## Status: read this first
 
 **Built for a Raspberry Pi 5 (16GB) and tested on a real car, a 2013 Ford
 Fusion AWD, through an ELM327 serial adapter.** On the car, the Pi read live
@@ -46,7 +46,7 @@ repository.
 
 ## Why local, not cloud
 
-- Cars lose signal in tunnels, garages, and rural roads — exactly where you
+- Cars lose signal in tunnels, garages, and rural roads, exactly where you
   most need to know whether a noise or a warning light matters.
 - Paying a cloud API call to be told your coolant is fine is absurd.
 - Vehicle telemetry is effectively location data; it shouldn't leave the car.
@@ -59,13 +59,13 @@ Every technical decision below follows from that constraint.
 
 1. You ask a question. It goes to `llama3.2:3b` running under Ollama, together
    with the list of tool schemas (the six readers).
-2. Instead of guessing a number, the model emits a **tool call** — e.g.
+2. Instead of guessing a number, the model emits a **tool call**, e.g.
    `get_coolant_temp()`.
 3. The dispatcher runs that Python function, which reads the sensor
    (from `MOCK_OBD` in this repository's version) and returns a dict with the
    **value, its unit, and context**.
 4. That result is appended to the conversation and sent back to the model.
-5. The model may call more tools, or — once it has what it needs — answer in
+5. The model may call more tools, or, once it has what it needs, answer in
    plain language.
 
 Two deliberate design choices make a small model reliable here:
@@ -92,7 +92,7 @@ Two deliberate design choices make a small model reliable here:
 ### The simulator seam
 
 Every tool reads through one dict, `MOCK_OBD`. Swapping in live python-OBD
-reads is a contained change inside those six functions — nothing above them
+reads is a contained change inside those six functions, so nothing above them
 moves. That is why the AI layer was built against a simulator first instead of
 blocking on hardware.
 
@@ -100,7 +100,7 @@ blocking on hardware.
 
 ## Running it
 
-### Tool layer only — no model, no dependencies
+### Tool layer only: no model, no dependencies
 
 ```bash
 python car_ai.py --selftest
@@ -166,8 +166,8 @@ hardware-constraint problem, not an ML problem.
 
 ## Team
 
-- **Ibrahim Qureshi** — AI & software layer: Ollama setup, model selection and
+- **Ibrahim Qureshi** (AI & software layer): Ollama setup, model selection and
   testing, tool-call design, and Pi environment setup (Ollama, model,
   virtualenv, SSH).
-- Collaborator — hardware integration and the in-car screen.
-- Collaborator — CAD and the 3D-printed enclosure.
+- Collaborator: hardware integration and the in-car screen.
+- Collaborator: CAD and the 3D-printed enclosure.
